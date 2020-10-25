@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Test</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
+    <!--    <script src="https://kit.fontawesome.com/2b344c5876.js" crossorigin="anonymous"></script>-->
+
+    <!--    <script type="text/javascript" id="MathJax-script" async-->
+    <!--            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.0.0/es5/latest?tex-mml-chtml.js">-->
+    <!--    </script>-->
+
+    <!--    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>-->
+    <!--    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
+
+    <script src="https://unpkg.com/vue"></script>
+    <script src="./dist/wysiwyg-math.min.js"></script>
+
+</head>
+<body style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh">
+<div style="width: 600px; height: 300px;">
+    <wysiwyg-math id="questionText"
+                  placeholder="Нажмите здесь, чтобы ввести вопрос"
+                  rows="5"
+    ></wysiwyg-math>
+
+    <span>\(x = {-b \pm \sqrt{b^2-4ac} \over 2a}\)</span>
+
+</div>
+
+</body>
+</html>
