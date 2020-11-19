@@ -15,10 +15,8 @@
                 <div class="d-flex">
                   <div style="position:relative;"
                   >
-                    <div class="py-1 px-2 text-center"
-                         style="background-color: #ffffff; position:relative; cursor: pointer; user-select: none;
-                           margin: 1px; border: rgb(133, 133, 133) solid 1px; border-radius: 4px"
-                         :style="`${showLetters ? 'border: black solid 2px; margin: 0;' : ''}`"
+                    <div class="py-1 px-2 text-center section-button"
+                         :class="{'expanded': showLetters}"
                          @click="showLetters = !showLetters"
                          @focusout="hideSelf"
                          tabindex="0"
@@ -27,7 +25,7 @@
                     </div>
                     <div v-show="showLetters"
                          style="z-index: 100; background-color: #ffffff; position: absolute; top: 100%; left: 0;
-                           margin-top: 8px; border: black 2px solid; border-radius: 4px; padding: 4px;
+                           margin-top: 8px; border: black 1px solid; border-radius: 4px; padding: 4px;
                            display: grid; grid-template-columns: repeat(8, 1fr); flex-wrap: wrap; text-align: center"
                          @mousedown="preventHide"
                     >
@@ -44,10 +42,8 @@
                   <div style="position:relative;"
                        class="ml-2"
                   >
-                    <div class="py-1 px-2 text-center"
-                         style="background-color: #ffffff; position:relative; cursor: pointer; user-select: none;
-                           margin: 1px; border: rgb(133, 133, 133) solid 1px; border-radius: 4px"
-                         :style="`${showOperators ? 'border: black solid 2px; margin: 0;' : ''}`"
+                    <div class="py-1 px-2 text-center section-button"
+                         :class="{'expanded': showOperators}"
                          @click="showOperators = !showOperators"
                          @focusout="hideSelf"
                          tabindex="0"
@@ -57,7 +53,7 @@
                     <div v-show="showOperators"
                          class=""
                          style="z-index: 100; background-color: #ffffff; position: absolute; top: 100%; left: 0;
-                           margin-top: 8px; border: black 2px solid; border-radius: 4px; padding: 4px;
+                           margin-top: 8px; border: black 1px solid; border-radius: 4px; padding: 4px;
                            display: grid; grid-template-columns: repeat(4, 1fr); flex-wrap: wrap; text-align: center"
                          @mousedown="preventHide"
                     >
@@ -74,10 +70,8 @@
                   <div style="position:relative;"
                        class="ml-2"
                   >
-                    <div class="py-1 px-2 text-center"
-                         style="background-color: #ffffff; position:relative; cursor: pointer; user-select: none;
-                           margin: 1px; border: rgb(133, 133, 133) solid 1px; border-radius: 4px"
-                         :style="`${showSymbols ? 'border: black solid 2px; margin: 0;' : ''}`"
+                    <div class="py-1 px-2 text-center section-button"
+                         :class="{'expanded': showSymbols}"
                          @click="showSymbols = !showSymbols"
                          @focusout="hideSelf"
                          tabindex="0"
@@ -87,7 +81,7 @@
                     <div v-show="showSymbols"
                          class=""
                          style="z-index: 100; background-color: #ffffff; position: absolute; top: 100%; left: 0;
-                           margin-top: 8px; border: black 2px solid; border-radius: 4px; padding: 4px;
+                           margin-top: 8px; border: black 1px solid; border-radius: 4px; padding: 4px;
                            display: grid; grid-template-columns: repeat(7, 1fr); flex-wrap: wrap; text-align: center"
                          @mousedown="preventHide"
                     >
@@ -389,47 +383,6 @@ export default {
 @import 'https://use.fontawesome.com/releases/v5.2.0/css/all.css';
 @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
 
-/*a:hover {*/
-/*  background: azure;*/
-/*}*/
-
-/*.fade-enter-active, .fade-leave-active {*/
-/*  transition: opacity .1s;*/
-/*}*/
-
-/*.fade-enter, .fade-leave-to {*/
-/*  opacity: 0;*/
-/*}*/
-
-/*.btn-md {*/
-/*  display: flex;*/
-/*  align-items: center;*/
-/*  padding: 0 2px !important;*/
-/*}*/
-
-/*.modal-mask {*/
-/*  position: fixed;*/
-/*  z-index: 9998;*/
-/*  top: 0;*/
-/*  left: 0;*/
-/*  width: 100%;*/
-/*  height: 100%;*/
-/*  background-color: rgba(0, 0, 0, .5);*/
-/*  display: table;*/
-/*}*/
-
-/*.modal-wrapper {*/
-/*  display: table-cell;*/
-/*  vertical-align: middle;*/
-/*}*/
-
-/*.selected {*/
-/*  background-color: #ffffff !important;*/
-/*  border: 2px #bebebe solid !important;*/
-/*  border-radius: 3px !important;*/
-/*  margin: 0 1px !important;*/
-/*}*/
-
 .letter {
   padding: 2px 4px;
   margin: 1px;
@@ -449,4 +402,18 @@ export default {
   cursor: pointer;
 }
 
+.section-button {
+  outline: none !important;
+  background-color: #ffffff;
+  position:relative;
+  cursor: pointer;
+  user-select: none;
+  margin: 1px;
+  border: rgb(133, 133, 133) solid 1px;
+  border-radius: 4px
+}
+
+.expanded {
+  background-color: #e9e9e9 !important;
+}
 </style>

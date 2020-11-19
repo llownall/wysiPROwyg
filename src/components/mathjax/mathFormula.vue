@@ -3,7 +3,7 @@
         contenteditable="false"
         v-show="show"
         ref="formula"
-        v-html="`\\( ${latex} \\)`"
+        v-html="` \\( ${latex} \\) `"
         @dblclick="edit"
   ></span>
 </template>
@@ -43,6 +43,6 @@ export default {
 
 <style>
 .wysiwyg-math-formula {
-  padding: 4px;
+  padding: 4px 0;
 }
 </style>

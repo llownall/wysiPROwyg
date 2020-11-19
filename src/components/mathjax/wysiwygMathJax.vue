@@ -6,17 +6,18 @@
 
     <transition name="fade">
     <span class="popup"
-          v-show="showPopup"
+          :class="{'hidden': !showPopup}"
           @mousedown="preventHide"
     >
       <span class="border-right">
         <button v-for="(fontStyle, index) in fontStyles"
                 :key="index"
+                class="popup-button"
                 :class="{selected: fontStyle.selected}"
-                @click="setStyle(fontStyle.style, false, null, true)"><i :class="fontStyle.icon"></i></button>
-        <!--        <button @click="setStyle('italic')"><i class="fas fa-italic"></i></button>-->
-        <!--        <button @click="setStyle('underline')"><i class="fas fa-underline"></i></button>-->
-        <!--        <button @click="setStyle('strikethrough')"><i class="fas fa-strikethrough"></i></button>-->
+                @click="setStyle(fontStyle.style, false, null); fontStyle.selected = !fontStyle.selected"
+        >
+          <i :class="fontStyle.icon"></i>
+        </button>
       </span>
       <span class="border-right">
 <!--        <button @click="decreaseFont">smaller</button>-->
@@ -30,25 +31,45 @@
           >{{ value }}</option>
         </select>
       </span>
-      <span class="border-right"><button @click="setStyle('justifyLeft')"><i class="fas fa-align-left"></i></button>
-        <button @click="setStyle('justifyCenter')"><i class="fas fa-align-center"></i></button>
-        <button @click="setStyle('justifyRight')"><i class="fas fa-align-right"></i></button>
-        <button @click="setStyle('justifyFull')"><i class="fas fa-align-justify"></i></button>
+      <span class="border-right">
+        <button v-for="(textStyle, index) in textStyles"
+                :key="index"
+                class="popup-button"
+                :class="{selected: textStyle.selected}"
+                @click="setStyle(textStyle.style); textStyle.selected = !textStyle.selected"
+        >
+          <i :class="textStyle.icon"></i>
+        </button>
       </span>
       <span class="border-right">
-        <button @click="setStyle('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
-        <button @click="setStyle('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
+        <button class="popup-button"
+                @click="setStyle('insertUnorderedList')"
+        >
+          <i class="fas fa-list-ul"></i>
+        </button>
+        <button class="popup-button"
+                @click="setStyle('insertOrderedList')"
+        >
+          <i class="fas fa-list-ol"></i>
+        </button>
       </span>
       <!--      <span class="border-right">-->
       <!--        <button @click="setStyle('formatBlock', false, 'h4')"><i class="fas fa-heading"></i></button>-->
       <!--      </span>-->
       <span class="border-right">
 <!--        <button @click="alert('not implemented')"><i class="fas fa-image"></i></button>-->
-        <button @click="createFormula"><i class="fas fa-square-root-alt"></i></button>
+        <button class="popup-button"
+                @click="createFormula"
+        >
+          <i class="fas fa-square-root-alt"></i>
+        </button>
         <!--        <button @click="toggleRaw">RAW</button>-->
       </span>
       <span class="">
-        <button @click="setStyle('undo')"><i class="fas fa-undo-alt"></i></button>
+        <button class="popup-button"
+                @click="setStyle('undo')"
+        ><i class="fas fa-undo-alt"></i>
+        </button>
       </span>
     </span>
     </transition>
@@ -131,6 +152,13 @@ export default {
         {tag: 'strike', icon: 'fas fa-strikethrough', style: 'strikethrough', selected: false},
       ],
 
+      textStyles: [
+        {tag: 'left', icon: 'fas fa-align-left', style: 'justifyLeft', selected: false},
+        {tag: 'center', icon: 'fas fa-align-center', style: 'justifyCenter', selected: false},
+        {tag: 'right', icon: 'fas fa-align-right', style: 'justifyRight', selected: false},
+        {tag: 'justify', icon: 'fas fa-align-justify', style: 'justifyFull', selected: false},
+      ],
+
       fontSizes: [
         {name: 'x-small', value: '1'},
         {name: 'small', value: '2'},
@@ -196,16 +224,16 @@ export default {
       //   clearInterval(this.hideTimeout);
     },
 
-    setStyle(style, showUI = false, value = null, pressButton = false) {
+    setStyle(style, showUI = false, value = null) {
       // this.preventHide();
       document.execCommand(style, showUI, value);
 
-      if (pressButton) {
-        let fontStyle = this.fontStyles.find(fontStyle => fontStyle.style === style)
-        if (fontStyle) {
-          fontStyle.selected = !fontStyle.selected;
-        }
-      }
+      // if (pressButton) {
+      //   let fontStyle = this.fontStyles.find(fontStyle => fontStyle.style === style)
+      //   if (fontStyle) {
+      //     fontStyle.selected = !fontStyle.selected;
+      //   }
+      // }
 
       // editor.trigger('keyup')
     },
@@ -312,6 +340,7 @@ export default {
       // let selection = window.getSelection(), parentEl, tags = [];
       let selection = this.selection;
       let parentEl, tags = [];
+      let fontSize = null;
 
       if (selection.rangeCount) {
         parentEl = selection.getRangeAt(0).commonAncestorContainer;
@@ -324,13 +353,31 @@ export default {
             break;
 
           let parentName = parentEl.nodeName.toLowerCase();
+
           if (parentEl === this.$refs.textarea) {
             break;
           }
+
+          try {
+            if (parentEl.style.textAlign !== '')
+              tags.push(parentEl.style.textAlign);
+            if (parentEl.style.fontSize !== '' && fontSize === null)
+              fontSize = parentEl.style.fontSize;
+            // eslint-disable-next-line no-empty
+          } catch (e) {
+
+          }
+
           tags.push(parentName);
         }
       }
+
+      if (typeof fontSize === 'string') {
+        this.selectedFontSize = parseInt(fontSize.slice(0, -2))
+      }
+
       this.fontStyles.forEach(fontStyle => fontStyle.selected = tags.includes(fontStyle.tag));
+      this.textStyles.forEach(fontStyle => fontStyle.selected = tags.includes(fontStyle.tag));
     },
 
     // preventEnter(event) {
@@ -426,6 +473,11 @@ export default {
   font-size: 12pt;
 }
 
+.hidden {
+  position: fixed;
+  top: 0;
+}
+
 .popup {
   background-color: #f3f3f3;
   color: #000000;
@@ -460,16 +512,22 @@ export default {
   padding: 0 4px;
 }
 
-.popup button {
+.popup-button {
   border: none;
   line-height: 1;
   background-color: inherit;
-  padding: 3px 4px;
-  margin: 2px 3px;
+  padding: 4px;
+  margin: 0 1px;
+  width: 27px;
+  border-radius: 3px !important;
 }
 
-a:hover {
-  background: azure;
+.popup-button:hover {
+  background-color: #dedede;
+}
+
+.selected {
+  background-color: #bfbfbf !important;
 }
 
 .fade-enter-active, .fade-leave-active {
@@ -502,30 +560,7 @@ a:hover {
   vertical-align: middle;
 }
 
-.selected {
-  background-color: #ffffff !important;
-  border: 2px #bebebe solid !important;
-  border-radius: 3px !important;
-  margin: 0 1px !important;
+button {
+  outline: none !important;
 }
-
-.letter {
-  padding: 2px 4px;
-  margin: 1px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.letter:hover {
-  background-color: #e2e2e2;
-  margin: 0;
-  border: 1px solid #868686;
-  border-radius: 3px;
-}
-
-.formula {
-  cursor: pointer;
-}
-
 </style>
