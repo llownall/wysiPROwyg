@@ -1,19 +1,25 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import wysiwygMathJax from "@/components/wysiwygMathJax";
+// import wysiwygMathJax from "@/components/mathjax/wysiwygMathJax";
+import wysiwygKaTeX from "@/components/katex/wysiwygKaTeX";
 
 Vue.use(VueRouter)
 
 const routes = [
-  {
-    path: '/jax',
-    name: 'wysiwygMathJax',
-    component: wysiwygMathJax
-  },
+    // {
+    //     path: '/jax',
+    //     name: 'wysiwygMathJax',
+    //     component: wysiwygMathJax
+    // },
+    {
+        path: '/katex',
+        name: 'wysiwygKaTeX',
+        component: wysiwygKaTeX
+    },
 ]
 
 const router = new VueRouter({
-  routes
+    routes
 })
 
 export default router

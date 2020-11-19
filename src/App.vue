@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <div id="nav">
-      <router-link to="/jax">wysiwygMath - MathJax</router-link>
-      <!--      |-->
-      <!--      <router-link to="/quill">wysiwygMath - MathQuill</router-link>-->
+<!--      <router-link to="/jax">wysiwygMath - MathJax</router-link>-->
+<!--      |-->
+      <router-link to="/katex">wysiwygMath - KaTeX</router-link>
     </div>
     <div style="padding: 40px">
       <keep-alive>
@@ -16,8 +16,8 @@
 <script>
 export default {
   created() {
-    if (this.$router.currentRoute.path !== '/jax')
-      this.$router.push('/jax');
+    if (this.$router.currentRoute.path !== '/katex')
+      this.$router.push('/katex');
   }
 }
 </script>

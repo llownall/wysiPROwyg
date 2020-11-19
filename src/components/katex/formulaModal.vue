@@ -11,7 +11,9 @@
               </button>
             </div>
             <div class="modal-body">
-              <div class="d-flex mb-3">
+              <div class="d-flex mb-3"
+                   ref="patterns"
+              >
                 <div class="d-flex">
                   <div style="position:relative;"
                   >
@@ -130,7 +132,7 @@
 </template>
 
 <script>
-import mathFormula from "@/components/mathFormula";
+import mathFormula from "@/components/mathjax/mathFormula";
 
 export default {
   name: 'wysiwygMath',
@@ -158,6 +160,7 @@ export default {
 
       preventHideFlag: false,
       changeOpacity: false,
+      preventFormulaWatcher: false,
 
       letters: [
         '\\alpha',
@@ -173,6 +176,7 @@ export default {
         '\\lambda',
         '\\mu',
         '\\nu',
+        '\\omicron',
         '\\pi',
         '\\rho',
         '\\sigma',
@@ -182,6 +186,22 @@ export default {
         '\\chi',
         '\\psi',
         '\\omega',
+        '\\Gamma',
+        '\\Delta',
+        '\\Theta',
+        '\\Lambda',
+        '\\Xi',
+        '\\Pi',
+        '\\Upsilon',
+        '\\Phi',
+        '\\Psi',
+        '\\Omega',
+        '\\Sigma',
+        '\\mathbb{N}',
+        '\\mathbb{Z}',
+        '\\mathbb{Q}',
+        '\\mathbb{R}',
+        '\\mathbb{C}',
       ],
 
       operators: [
@@ -261,51 +281,52 @@ export default {
       if (this.updateFormulaTimeout)
         clearTimeout(this.updateFormulaTimeout);
 
-      this.updateFormulaTimeout = setTimeout(() => {
-        // this.$refs.formulaPreview.style.opacity = 0;
-        this.$refs.formulaPreview.innerHTML = `\\(${this.formula}\\)`;
-        window.MathJax.typeset();
+      if (!this.preventFormulaWatcher) {
+        this.updateFormulaTimeout = setTimeout(() => {
+          // this.$refs.formulaPreview.style.opacity = 0;
 
-        if (this.changeOpacity) {
-          this.$refs.formulaPreview.style.opacity = 1;
-          this.changeOpacity = false;
-        }
-      }, 1500);
+          window.katex.render(`${this.formula}`, this.$refs.formulaPreview, {
+            throwOnError: false,
+            output: 'html',
+          });
+
+          if (this.changeOpacity) {
+            this.$refs.formulaPreview.style.opacity = 1;
+            this.changeOpacity = false;
+          }
+        }, 1500);
+      } else {
+        this.preventFormulaWatcher = false;
+      }
     },
 
-    // showLetters() {
-    //   if (this.showLetters) {
-    //     this.showOperators = false;
-    //     this.showSymbols = false;
-    //   }
-    // },
-    // showOperators() {
-    //   if (this.showOperators) {
-    //     this.showLetters = false;
-    //     this.showSymbols = false;
-    //   }
-    // },
-    // showSymbols() {
-    //   if (this.showSymbols) {
-    //     this.showLetters = false;
-    //     this.showOperators = false;
-    //   }
-    // },
+    showModal() {
+      if (this.showModal) {
+        setTimeout(() => {
+        }, 1000)
+      }
+    },
   },
   methods: {
     toggle(data = null) {
       this.data = data;
 
+      this.formula = '';
+      this.$refs.formulaPreview.innerHTML = '';
+
       if (this.isInEditMode) {
-        this.$refs.formulaPreview.style.opacity = 0;
-        this.changeOpacity = true;
+        this.preventFormulaWatcher = true;
         this.formula = data.latex;
+        window.katex.render(`${this.formula}`, this.$refs.formulaPreview, {
+          throwOnError: false,
+          output: 'html',
+        });
       }
 
-      if (this.formula)
-        this.$refs.formulaPreview.innerHTML = `\\(${this.formula}\\)`;
-      else
-        this.$refs.formulaPreview.innerHTML = '';
+      // if (this.formula)
+      //   this.$refs.formulaPreview.innerHTML = `\\(${this.formula}\\)`;
+      // else
+      //   this.$refs.formulaPreview.innerHTML = '';
 
       this.showModal = true;
 
@@ -337,7 +358,9 @@ export default {
     },
 
     updateFormulaCursorPos(event) {
-      this.formulaCursorPos = event.target.selectionStart;
+      setTimeout(() => {
+        this.formulaCursorPos = event.target.selectionStart;
+      }, 100)
     },
 
     insertToFormula(symbol) {
@@ -405,7 +428,7 @@ export default {
 .section-button {
   outline: none !important;
   background-color: #ffffff;
-  position:relative;
+  position: relative;
   cursor: pointer;
   user-select: none;
   margin: 1px;

@@ -3,7 +3,6 @@
         contenteditable="false"
         v-show="show"
         ref="formula"
-        v-html="` \\( ${latex} \\) `"
         @dblclick="edit"
   ></span>
 </template>
@@ -30,7 +29,13 @@ export default {
     render() {
       this.show = false;
       setTimeout(() => {
-        window.MathJax.typeset();
+        window.katex.render(`${this.latex}`, this.$refs.formula, {
+          throwOnError: false,
+          output: 'html',
+        });
+
+        this.$refs.formula.innerHTML = ' ' + this.$refs.formula.innerHTML + ' ';
+
         this.show = true;
       }, 100);
     },
@@ -43,6 +48,8 @@ export default {
 
 <style>
 .wysiwyg-math-formula {
-  padding: 4px 0;
+  padding: 4px;
+  cursor: pointer;
+  user-select: none;
 }
 </style>

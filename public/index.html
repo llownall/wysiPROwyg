@@ -5,7 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= htmlWebpackPlugin.options.title %></title>
+    <title>wysiwygMath. Демонстрация работы компонента</title>
+    <!--    <title><%= htmlWebpackPlugin.options.title %></title>-->
 
     <!--    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">-->
 
@@ -15,9 +16,14 @@
     <!--                src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.0.0/es5/latest?tex-mml-chtml.js">-->
     <!--        </script>-->
 
-    <script type="text/javascript" id="MathJax-script" async
-            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-    </script>
+    <!--    <script type="text/javascript" id="MathJax-script" async-->
+    <!--            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">-->
+    <!--    </script>-->
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.js"
+            onload="renderMathInElement(document.body);"></script>
 
 </head>
 <body style="display: flex; flex-direction: column; justify-content: center; height: 100%">

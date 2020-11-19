@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="d-flex justify-content-end">
-      <h3>MathJax</h3>
+      <h3>KaTeX</h3>
     </div>
 
     <transition name="fade">
@@ -13,8 +13,8 @@
         <button v-for="(fontStyle, index) in fontStyles"
                 :key="index"
                 class="popup-button"
-                :class="{selected: fontStyle.selected}"
-                @click="setStyle(fontStyle.style, false, null); fontStyle.selected = !fontStyle.selected"
+                :class="{'selected': fontStyle.selected}"
+                @click="setStyle(fontStyle.style, false, null, true)"
         >
           <i :class="fontStyle.icon"></i>
         </button>
@@ -36,21 +36,19 @@
                 :key="index"
                 class="popup-button"
                 :class="{selected: textStyle.selected}"
-                @click="setStyle(textStyle.style); textStyle.selected = !textStyle.selected"
+                @click="textAlign(textStyle.style); textStyle.selected = !textStyle.selected"
         >
           <i :class="textStyle.icon"></i>
         </button>
       </span>
       <span class="border-right">
-        <button class="popup-button"
-                @click="setStyle('insertUnorderedList')"
+        <button v-for="(listType, index) in lists"
+                :key="index"
+                class="popup-button"
+                :class="{selected: listType.selected}"
+                @click="setStyle(listType.style, false, null)"
         >
-          <i class="fas fa-list-ul"></i>
-        </button>
-        <button class="popup-button"
-                @click="setStyle('insertOrderedList')"
-        >
-          <i class="fas fa-list-ol"></i>
+          <i :class="listType.icon"></i>
         </button>
       </span>
       <!--      <span class="border-right">-->
@@ -73,22 +71,23 @@
       </span>
     </span>
     </transition>
-    <div :id="id"
-         :placeholder="placeholder"
-         :style="`height: calc(1.5em * ${rows} + .75rem + 2px); display: inline-block`"
-         class="form-control editor"
-         contenteditable
-         ref="textarea"
-         @focusin="showPopup = true"
-         @focusout="hideSelf"
-         @input="onDivInput"
-         @change="onDivInput"
-         @click="updateCursorPos"
-         @keyup="updateCursorPos"
+    <span :id="id"
+          :placeholder="placeholder"
+          :style="`height: calc(1.5em * ${rows} + .75rem + 2px);`"
+          class="form-control editor"
+          contenteditable
+          ref="textarea"
+          @focusin="showPopup = true"
+          @focusout="hideSelf"
+          @input="onDivInput"
+          @change="onDivInput"
+          @click="updateCursorPos"
+          @keyup="updateCursorPos"
     >
-    </div>
 
-    cursorPos = {{ cursorPos }}
+    </span>
+
+    <!--    cursorPos = {{ cursorPos }}-->
 
     <div>
       dataRaw
@@ -114,8 +113,8 @@
 </template>
 
 <script>
-import mathFormula from "@/components/mathFormula";
-import formulaModal from "@/components/formulaModal";
+import mathFormula from "@/components/katex/mathFormula";
+import formulaModal from "@/components/katex/formulaModal";
 import Vue from 'vue';
 
 export default {
@@ -138,12 +137,12 @@ export default {
       showPopup: false,
       hideTimeout: null,
       preventHideFlag: false,
-      formula: 'x',
-      // formula: 'x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}',
 
       data: '',
       selection: null,
       range: null,
+
+      align: 'left',
 
       fontStyles: [
         {tag: 'b', icon: 'fas fa-bold', style: 'bold', selected: false},
@@ -152,12 +151,24 @@ export default {
         {tag: 'strike', icon: 'fas fa-strikethrough', style: 'strikethrough', selected: false},
       ],
 
-      textStyles: [
-        {tag: 'left', icon: 'fas fa-align-left', style: 'justifyLeft', selected: false},
-        {tag: 'center', icon: 'fas fa-align-center', style: 'justifyCenter', selected: false},
-        {tag: 'right', icon: 'fas fa-align-right', style: 'justifyRight', selected: false},
-        {tag: 'justify', icon: 'fas fa-align-justify', style: 'justifyFull', selected: false},
+      lists: [
+        {tag: 'ul', icon: 'fas fa-list-ul', style: 'insertUnorderedList', selected: false},
+        {tag: 'ol', icon: 'fas fa-list-ol', style: 'insertOrderedList', selected: false},
       ],
+
+      textStyles: [
+        {tag: 'left', icon: 'fas fa-align-left', style: 'left', selected: false},
+        {tag: 'center', icon: 'fas fa-align-center', style: 'center', selected: false},
+        {tag: 'right', icon: 'fas fa-align-right', style: 'right', selected: false},
+        {tag: 'justify', icon: 'fas fa-align-justify', style: 'justify', selected: false},
+      ],
+
+      // textStyles: [
+      //   {tag: 'left', icon: 'fas fa-align-left', style: 'justifyLeft', selected: false},
+      //   {tag: 'center', icon: 'fas fa-align-center', style: 'justifyCenter', selected: false},
+      //   {tag: 'right', icon: 'fas fa-align-right', style: 'justifyRight', selected: false},
+      //   {tag: 'justify', icon: 'fas fa-align-justify', style: 'justifyFull', selected: false},
+      // ],
 
       fontSizes: [
         {name: 'x-small', value: '1'},
@@ -184,7 +195,7 @@ export default {
         48,
         60,
         72,
-        96
+        96,
       ],
 
       updateFormulaTimeout: null,
@@ -199,22 +210,7 @@ export default {
       }
     },
   },
-  watch: {
-    formula() {
-      if (this.updateFormulaTimeout)
-        clearTimeout(this.updateFormulaTimeout);
-
-      this.updateFormulaTimeout = setTimeout(() => {
-        // this.$refs.formulaPreview.style.opacity = 0;
-        this.$refs.formulaPreview.innerHTML = `\\(${this.formula}\\)`;
-        window.MathJax.typeset();
-        // setTimeout(() => {
-        //   window.MathJax.typeset();
-        //   this.$refs.formulaPreview.style.opacity = 1;
-        // }, 200);
-      }, 1500);
-    },
-  },
+  watch: {},
   methods: {
     preventHide() {
       // console.log('preventHide')
@@ -224,19 +220,40 @@ export default {
       //   clearInterval(this.hideTimeout);
     },
 
-    setStyle(style, showUI = false, value = null) {
+    // eslint-disable-next-line no-unused-vars
+    setStyle(style, showUI = false, value = null, setPressed = false) {
       // this.preventHide();
       document.execCommand(style, showUI, value);
 
-      // if (pressButton) {
-      //   let fontStyle = this.fontStyles.find(fontStyle => fontStyle.style === style)
-      //   if (fontStyle) {
-      //     fontStyle.selected = !fontStyle.selected;
-      //   }
-      // }
-
       // editor.trigger('keyup')
+
+      this.$refs.textarea.focus();
+
+      if (setPressed) {
+        let fontStyle = this.fontStyles.find(fontStyle => fontStyle.style === style);
+        if (fontStyle) {
+          fontStyle.selected = !fontStyle.selected;
+        }
+      } else {
+        setTimeout(() => {
+          this.analyze();
+        }, 100)
+      }
     },
+
+    textAlign(side) {
+      let paragraph = this.selection.getRangeAt(0).commonAncestorContainer;
+      while (paragraph.nodeName.toLowerCase() !== 'p') {
+        paragraph = paragraph.parentNode;
+      }
+      paragraph.style.textAlign = side;
+
+      this.$refs.textarea.focus();
+      setTimeout(() => {
+        this.analyze();
+      }, 100)
+    },
+
     hideSelf() {
       if (!this.preventHideFlag) {
         this.showPopup = false;
@@ -268,19 +285,30 @@ export default {
     },
 
     test() {
-      console.log('test')
+      let el = document.createElement('p');
+
+      this.range.insertNode(el);
+      this.updateData();
     },
 
     changeFontSize() {
-      let size = this.selectedFontSize;
-      let selected = this.range.extractContents();
-      Array.from(selected.children).forEach(element => element.style.removeProperty('font-size'))
-      let wrapper = document.createElement('span')
-      wrapper.style.fontSize = size.toString() + 'pt';
-      wrapper.appendChild(selected);
-      this.range.insertNode(wrapper);
+      if (this.$refs.textarea.textContent === '') {
+        this.$refs.textarea.innerHTML = `<p><span style="font-size: ${this.selectedFontSize}pt;"><br></span></p>`;
+      } else {
+        let selected = this.range.extractContents();
 
+        let parent = this.selection.anchorNode.parentNode;
+        if (parent.textContent === '')
+          parent.remove();
+
+        Array.from(selected.children).forEach(element => element.style.removeProperty('font-size'))
+        let wrapper = document.createElement('span')
+        wrapper.style.fontSize = this.selectedFontSize.toString() + 'pt';
+        wrapper.appendChild(selected);
+        this.range.insertNode(wrapper);
+      }
       this.updateData();
+      this.$refs.textarea.focus();
     },
 
     insertLaTeX(latex) {
@@ -289,7 +317,7 @@ export default {
       let instance = new ComponentClass({
         propsData: {latex: latex}
       })
-      instance.$mount()
+      instance.$mount();
       this.range.insertNode(instance.$el);
       this.updateData();
 
@@ -330,27 +358,35 @@ export default {
     //   range.setEnd(_range.endContainer, _range.endOffset)
     //   return range.toString().length;
     // },
-    updateCursorPos() {
+    updateCursorPos(event) {
       this.selection = window.getSelection();
       this.range = this.selection.getRangeAt(0);
-      this.analyze();
+
+      if (event.type === 'click')
+        setTimeout(this.analyze, 100);
+      else
+        this.analyze();
     },
 
     analyze() {
       // let selection = window.getSelection(), parentEl, tags = [];
       let selection = this.selection;
-      let parentEl, tags = [];
-      let fontSize = null;
+      let parentEl, tags = [], styles = {};
+
+      // console.log(selection)
+      // console.log(selection.getRangeAt(0))
 
       if (selection.rangeCount) {
         parentEl = selection.getRangeAt(0).commonAncestorContainer;
 
         // eslint-disable-next-line no-constant-condition
         while (true) {
-          parentEl = parentEl.parentNode;
+          // parentEl = parentEl.parentNode;
 
           if (parentEl == null)
             break;
+
+          // console.log(parentEl)
 
           let parentName = parentEl.nodeName.toLowerCase();
 
@@ -358,26 +394,59 @@ export default {
             break;
           }
 
-          try {
-            if (parentEl.style.textAlign !== '')
-              tags.push(parentEl.style.textAlign);
-            if (parentEl.style.fontSize !== '' && fontSize === null)
-              fontSize = parentEl.style.fontSize;
-            // eslint-disable-next-line no-empty
-          } catch (e) {
+          // eslint-disable-next-line no-inner-declarations
+          function getParam(parentStyle, key) {
+            try {
+              if (parentStyle[key] !== '') {
+                return parentStyle[key];
+              } else return null;
+            } catch (e) {
+              return null;
+            }
+          }
 
+          if (!('textAlign' in styles && styles.textAlign !== null)) {
+            styles.textAlign = getParam(parentEl.style, 'textAlign');
+          }
+          if (!('fontSize' in styles && styles.fontSize !== null)) {
+            styles.fontSize = getParam(parentEl.style, 'fontSize');
+          }
+          if (!('fontWeight' in styles && styles.fontWeight !== null)) {
+            styles.fontWeight = getParam(parentEl.style, 'fontWeight');
           }
 
           tags.push(parentName);
+
+          parentEl = parentEl.parentNode;
         }
       }
 
-      if (typeof fontSize === 'string') {
-        this.selectedFontSize = parseInt(fontSize.slice(0, -2))
+      // console.log(tags)
+      // console.log(styles)
+
+      if (![undefined, null].includes(styles.fontSize)) {
+        let size = parseInt(styles.fontSize.slice(0, -2))
+        let dimension = styles.fontSize.slice(-2);
+        if (dimension === 'px') {
+          size *= 3 / 4;
+        }
+        this.selectedFontSize = size;
+      } else {
+        this.selectedFontSize = 12;
       }
 
+      this.lists.forEach(listStyle => listStyle.selected = tags.includes(listStyle.tag));
       this.fontStyles.forEach(fontStyle => fontStyle.selected = tags.includes(fontStyle.tag));
-      this.textStyles.forEach(fontStyle => fontStyle.selected = tags.includes(fontStyle.tag));
+      if (styles.fontWeight === 'bolder') {
+        this.fontStyles[0].selected = true;
+      }
+
+      let isAlignSet = false;
+      this.textStyles.forEach(textStyle => {
+        textStyle.selected = styles.textAlign === textStyle.tag;
+        if (textStyle.selected) isAlignSet = true;
+      });
+      if (!isAlignSet) this.textStyles[0].selected = true;
     },
 
     // preventEnter(event) {
@@ -430,27 +499,28 @@ export default {
     },
   },
   beforeCreate() {
-    // let jScript = document.createElement('script')
-    // jScript.setAttribute('src', 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js')
+    // let jScript = document.createElement('script');
+    // jScript.setAttribute('src', 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.js')
     // document.head.appendChild(jScript);
+    //
+    // let jScript2 = document.createElement('script');
+    // jScript2.setAttribute('src', 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js')
+    // jScript2.setAttribute('onload', 'renderMathInElement(document.body)')
+    // document.head.appendChild(jScript2);
   },
   beforeMount() {
-    window.MathJax = {
-      options: {
-        enableMenu: false,
-      }
-    };
-
-    // window.MathJax.Hub.Config({
-    //   showMathMenu: false,
-    // });
   },
   mounted() {
     window.bus = new Vue({});
     window.bus.$on('formula-click', (data) => {
       this.$refs.formulaEditModal.toggle(data);
     });
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+    this.$refs.textarea.innerHTML = '<p><span style="font-size: 12pt;"><br></span></p>';
   },
+
+  updated() {
+  }
 }
 </script>
 
@@ -458,6 +528,8 @@ export default {
 @import 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css';
 /*@import 'https://use.fontawesome.com/releases/v5.2.0/css/all.css';*/
 @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+/*@import 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css';*/
+/*@import 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css';*/
 
 .editor[placeholder]:empty:before {
   content: attr(placeholder);
@@ -470,7 +542,11 @@ export default {
 
 .editor {
   overflow-x: hidden;
-  font-size: 12pt;
+  white-space: pre-wrap;
+}
+
+.editor p {
+  margin: 0;
 }
 
 .hidden {
