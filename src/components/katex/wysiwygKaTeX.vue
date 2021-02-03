@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="wysimath-app">
     <div class="d-flex justify-content-end">
       <h3>KaTeX</h3>
     </div>
@@ -73,7 +73,7 @@
     </transition>
     <span :id="id"
           :placeholder="placeholder"
-          :style="`height: calc(1.5em * ${rows} + .75rem + 2px);`"
+          :style="noHeight ? '' : `height: calc(1.5em * ${rows} + .75rem + 2px);`"
           class="form-control editor"
           contenteditable
           ref="textarea"
@@ -81,10 +81,8 @@
           @focusout="hideSelf"
           @input="onDivInput"
           @change="onDivInput"
-          @click="updateCursorPos"
           @keyup="updateCursorPos"
     >
-
     </span>
 
     <!--    cursorPos = {{ cursorPos }}-->
@@ -107,7 +105,7 @@
 
     <formula-modal ref="formulaEditModal"
                    is-in-edit-mode
-                   @insert-latex="insertLaTeX2"
+                   @insert-latex="modifyLaTeX"
     />
   </div>
 </template>
@@ -126,6 +124,10 @@ export default {
   },
   props: {
     id: String,
+    noHeight: {
+      type: Boolean,
+      default: false,
+    },
     placeholder: String,
     rows: {
       type: Number,
@@ -162,13 +164,6 @@ export default {
         {tag: 'right', icon: 'fas fa-align-right', style: 'right', selected: false},
         {tag: 'justify', icon: 'fas fa-align-justify', style: 'justify', selected: false},
       ],
-
-      // textStyles: [
-      //   {tag: 'left', icon: 'fas fa-align-left', style: 'justifyLeft', selected: false},
-      //   {tag: 'center', icon: 'fas fa-align-center', style: 'justifyCenter', selected: false},
-      //   {tag: 'right', icon: 'fas fa-align-right', style: 'justifyRight', selected: false},
-      //   {tag: 'justify', icon: 'fas fa-align-justify', style: 'justifyFull', selected: false},
-      // ],
 
       fontSizes: [
         {name: 'x-small', value: '1'},
@@ -241,12 +236,48 @@ export default {
       }
     },
 
-    textAlign(side) {
-      let paragraph = this.selection.getRangeAt(0).commonAncestorContainer;
-      while (paragraph.nodeName.toLowerCase() !== 'p') {
-        paragraph = paragraph.parentNode;
+    resetChildStyle(node, style) {
+      if (node instanceof HTMLElement) {
+        Array.from(node.children).forEach(child => {
+          child.style[style] = null
+          this.resetChildStyle(child, style)
+        })
       }
-      paragraph.style.textAlign = side;
+    },
+
+    isEditor(node) {
+      if (node.classList === undefined)
+        return false
+      return Array.from(node.classList).includes('editor')
+    },
+
+    textAlign(side) {
+      // if (side === 'left') {
+      //   document.execCommand('justifyLeft', false, '')
+      // } else if (side === 'center') {
+      //   document.execCommand('justifyCenter', false, '')
+      // } else if (side === 'right') {
+      //   document.execCommand('justifyRight', false, '')
+      // } else if (side === 'justify') {
+      //   document.execCommand('justifyFull', false, '')
+      // }
+      // return
+
+      let paragraph = this.selection.getRangeAt(0).commonAncestorContainer;
+      this.resetChildStyle(paragraph, 'textAlign')
+
+      if (this.isEditor(paragraph)) {
+        let selected = this.range.extractContents()
+        let wrapper = document.createElement('p')
+        wrapper.style.textAlign = side;
+        wrapper.appendChild(selected);
+        this.range.insertNode(wrapper);
+      } else {
+        while (paragraph.nodeName.toLowerCase() !== 'p') {
+          paragraph = paragraph.parentNode;
+        }
+        paragraph.style.textAlign = side;
+      }
 
       this.$refs.textarea.focus();
       setTimeout(() => {
@@ -279,45 +310,133 @@ export default {
     onDivInput(event) {
       this.$emit('input', event.target.innerHTML)
       this.data = event.target.innerHTML;
+
+      let emptyPattern = /^(\n)*$/
+      if (emptyPattern.test(event.target.innerText))
+        this.$refs.textarea.innerHTML = `<p><span class="wrapper" style="font-size: ${this.selectedFontSize}pt;">&#65279;</span></p>`;
     },
     onDataRawInput() {
       this.$refs.textarea.innerHTML = this.data;
     },
 
-    test() {
-      let el = document.createElement('p');
+    removeFontSizeRecursive(element) {
+      if (element.style !== undefined)
+        element.removeAttribute('style')
+      // element.style.removeProperty('font-size')
+      Array.from(element.children).forEach(child => {
+        this.removeFontSizeRecursive(child)
+      })
+    },
 
-      this.range.insertNode(el);
-      this.updateData();
+    removeEmptyWrappers() {
+      this.$refs.textarea.querySelectorAll('.wrapper').forEach(wrapper => {
+        if (wrapper.textContent === '')
+          wrapper.remove()
+      })
+    },
+
+    removeWrappers(element, remove, deepness) {
+      console.log(`deepness = ${deepness}`)
+
+      element.querySelectorAll('.wrapper').forEach(el => {
+        let wrapper = document.createElement('span')
+        wrapper.innerHTML = el.innerHTML
+        el.parentNode.insertBefore(wrapper, el)
+        this.removeWrappers(el, true, deepness + 1)
+        if (remove)
+          el.parentNode.removeChild(el)
+      })
+    },
+
+    findWrapper(element, text) {
+      console.log(element)
+      console.log(text)
+
+      if (element.parentNode.tagName === 'SPAN') {
+        if (element.parentNode.textContent !== text)
+          return this.findWrapper(element.parentNode, text)
+        else
+          return element
+      } else return null
     },
 
     changeFontSize() {
-      if (this.$refs.textarea.textContent === '') {
-        this.$refs.textarea.innerHTML = `<p><span style="font-size: ${this.selectedFontSize}pt;"><br></span></p>`;
+      if (this.$refs.textarea.textContent === '﻿') {
+        this.$refs.textarea.innerHTML = `<p><span class="wrapper" style="font-size: ${this.selectedFontSize}pt;">&#65279;</span></p>`;
       } else {
         let selected = this.range.extractContents();
 
-        let parent = this.selection.anchorNode.parentNode;
-        if (parent.textContent === '')
-          parent.remove();
+        // let selectedText = selected.textContent
+        // let startNode = this.selection.anchorNode
+        //
+        // let mainWrapper = this.findWrapper(startNode, selectedText)
+        // console.log(mainWrapper)
 
-        Array.from(selected.children).forEach(element => element.style.removeProperty('font-size'))
-        let wrapper = document.createElement('span')
+        // this.removeWrappers(selected, false, 0)
+
+        // let setInnerHTML = false;
+        //
+        // this.removeFontSizeRecursive(selected)
+        //
+        // let children = Array.from(selected.children);
+        // if (children.length === 1 && children[0].classList.contains('wrapper')) {
+        //   setInnerHTML = true
+        //   selected = children[0].innerHTML
+        // }
+
+        let wrapper
+        let hasToInsert = false
+
+        let tempElem = document.createElement('span')
+        let tempFragment = selected.cloneNode(true)
+        tempElem.appendChild(tempFragment)
+
+        if (this.range.commonAncestorContainer.classList !== undefined
+            && this.range.commonAncestorContainer.classList.contains('wrapper')
+            && this.range.commonAncestorContainer.textContent === tempElem.textContent) {
+          wrapper = this.range.commonAncestorContainer
+        } else {
+          hasToInsert = true
+          wrapper = document.createElement('span')
+          wrapper.classList.add('wrapper')
+        }
         wrapper.style.fontSize = this.selectedFontSize.toString() + 'pt';
+        // if (setInnerHTML)
+        //   wrapper.innerHTML = selected
+        // else {
+        wrapper.innerHTML = '&#65279;'
         wrapper.appendChild(selected);
-        this.range.insertNode(wrapper);
+        // }
+        Array.from(wrapper.children).forEach(child => this.removeFontSizeRecursive(child))
+
+        tempElem.remove()
+        // tempFragment.remove()
+
+        this.removeEmptyWrappers()
+        if (hasToInsert) {
+          this.range.insertNode(wrapper);
+        } else {
+          // let range = document.createRange();
+          this.range.selectNodeContents(wrapper);
+          this.selection.removeAllRanges();
+          this.selection.addRange(this.range);
+        }
       }
-      this.updateData();
-      this.$refs.textarea.focus();
+      this.updateData()
+      this.$nextTick(() => this.$refs.textarea.focus())
     },
 
-    insertLaTeX(latex) {
-      // 'x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}'
-      let ComponentClass = Vue.mixin(mathFormula)
+    getRenderedFormula(latex) {
+      let ComponentClass = Vue.extend(mathFormula)
       let instance = new ComponentClass({
         propsData: {latex: latex}
       })
-      instance.$mount();
+      instance.$mount()
+      return instance
+    },
+
+    insertLaTeX(latex) {
+      let instance = this.getRenderedFormula(latex)
       this.range.insertNode(instance.$el);
       this.updateData();
 
@@ -327,15 +446,20 @@ export default {
       this.$refs.textarea.focus();
     },
 
-    insertLaTeX2(data) {
-      let ComponentClass = Vue.mixin(mathFormula)
-      let instance = new ComponentClass({
-        propsData: {latex: data.latex}
-      })
-      instance.$mount()
+    modifyLaTeX(data, noFocus = false) {
+      let instance = this.getRenderedFormula(data.latex)
+
       data.element.parentNode.insertBefore(instance.$el, data.element);
       data.element.parentNode.removeChild(data.element);
-      this.$refs.textarea.focus();
+
+      if (!noFocus)
+        this.$refs.textarea.focus();
+    },
+
+    rerenderFormulas() {
+      this.$refs.textarea.querySelectorAll('.wysiwyg-math-formula').forEach(el => {
+        this.modifyLaTeX({element: el, latex: el.dataset.latex}, true)
+      })
     },
 
     updateData() {
@@ -359,13 +483,18 @@ export default {
     //   return range.toString().length;
     // },
     updateCursorPos(event) {
-      this.selection = window.getSelection();
-      this.range = this.selection.getRangeAt(0);
+      let newSelection = window.getSelection();
 
-      if (event.type === 'click')
-        setTimeout(this.analyze, 100);
-      else
-        this.analyze();
+      // действие было внутри редактора
+      if (this.$refs.textarea.contains(newSelection.anchorNode)) {
+        this.selection = newSelection
+        this.range = this.selection.getRangeAt(0);
+
+        if (event !== null && 'type' in event && event.type === 'click')
+          setTimeout(this.analyze, 100);
+        else
+          this.analyze();
+      }
     },
 
     analyze() {
@@ -421,9 +550,6 @@ export default {
         }
       }
 
-      // console.log(tags)
-      // console.log(styles)
-
       if (![undefined, null].includes(styles.fontSize)) {
         let size = parseInt(styles.fontSize.slice(0, -2))
         let dimension = styles.fontSize.slice(-2);
@@ -431,9 +557,10 @@ export default {
           size *= 3 / 4;
         }
         this.selectedFontSize = size;
-      } else {
-        this.selectedFontSize = 12;
       }
+      // else {
+      //   this.selectedFontSize = 12;
+      // }
 
       this.lists.forEach(listStyle => listStyle.selected = tags.includes(listStyle.tag));
       this.fontStyles.forEach(fontStyle => fontStyle.selected = tags.includes(fontStyle.tag));
@@ -516,7 +643,15 @@ export default {
       this.$refs.formulaEditModal.toggle(data);
     });
     document.execCommand('defaultParagraphSeparator', false, 'p');
-    this.$refs.textarea.innerHTML = '<p><span style="font-size: 12pt;"><br></span></p>';
+
+    this.$refs.textarea.innerHTML = '<p><span class="wrapper" style="font-size: 12pt;">&#65279;</span></p>';
+
+    // window.bus.$on(`content-update-${this.id}`, this.rerenderFormulas);
+    // window.bus.$on(`content-update`, this.rerenderFormulas);
+
+    document.addEventListener('mouseup', (event) => {
+      this.updateCursorPos(event)
+    })
   },
 
   updated() {

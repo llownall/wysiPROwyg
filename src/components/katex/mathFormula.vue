@@ -4,6 +4,7 @@
         v-show="show"
         ref="formula"
         @dblclick="edit"
+        :data-latex="latex"
   ></span>
 </template>
 
@@ -34,7 +35,7 @@ export default {
           output: 'html',
         });
 
-        this.$refs.formula.innerHTML = ' ' + this.$refs.formula.innerHTML + ' ';
+        this.$refs.formula.innerHTML = ' ' + this.$refs.formula.innerHTML + ' '
 
         this.show = true;
       }, 100);

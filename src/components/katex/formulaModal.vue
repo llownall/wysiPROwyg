@@ -132,10 +132,10 @@
 </template>
 
 <script>
-import mathFormula from "@/components/mathjax/mathFormula";
+import mathFormula from "@/components/katex/mathFormula";
 
 export default {
-  name: 'wysiwygMath',
+  name: 'formulaModal',
   components: {
     // eslint-disable-next-line vue/no-unused-components
     mathFormula
@@ -329,9 +329,12 @@ export default {
       //   this.$refs.formulaPreview.innerHTML = '';
 
       this.showModal = true;
+      this.$nextTick(() => {
+        this.$refs.formulaTextarea.focus();
+      })
 
       // setTimeout(() => {
-      //   this.$refs.formulaTextarea.focus();
+      // this.$refs.formulaTextarea.focus();
       // }, 100);
     },
 
