@@ -361,6 +361,8 @@ export default {
     },
 
     changeFontSize() {
+      let fontSize = this.selectedFontSize
+
       if (this.$refs.textarea.textContent === '﻿') {
         this.$refs.textarea.innerHTML = `<p><span class="wrapper" style="font-size: ${this.selectedFontSize}pt;">&#65279;</span></p>`;
       } else {
@@ -422,8 +424,13 @@ export default {
           this.selection.addRange(this.range);
         }
       }
+      this.range.collapse(false);
+
       this.updateData()
-      this.$nextTick(() => this.$refs.textarea.focus())
+      this.$nextTick(() => {
+        this.$refs.textarea.focus()
+        this.selectedFontSize = fontSize
+      })
     },
 
     getRenderedFormula(latex) {
@@ -437,13 +444,18 @@ export default {
 
     insertLaTeX(latex) {
       let instance = this.getRenderedFormula(latex)
-      this.range.insertNode(instance.$el);
-      this.updateData();
+      let textNode = document.createTextNode('﻿');
 
+      this.range.insertNode(textNode);
+      this.range.insertNode(instance.$el);
+
+      this.range.collapse(false);
       this.selection.removeAllRanges();
       this.selection.addRange(this.range);
-      this.selection.collapseToEnd();
       this.$refs.textarea.focus();
+
+      console.log(this.range)
+      console.log(this.selection)
     },
 
     modifyLaTeX(data, noFocus = false) {
@@ -452,8 +464,12 @@ export default {
       data.element.parentNode.insertBefore(instance.$el, data.element);
       data.element.parentNode.removeChild(data.element);
 
-      if (!noFocus)
+      if (!noFocus) {
+        this.selection.removeAllRanges();
+        this.selection.addRange(this.range);
+        this.selection.collapseToEnd();
         this.$refs.textarea.focus();
+      }
     },
 
     rerenderFormulas() {
