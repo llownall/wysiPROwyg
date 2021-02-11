@@ -14,7 +14,8 @@ const routes = [
     {
         path: '/katex',
         name: 'wysiwygKaTeX',
-        component: wysiwygKaTeX
+        component: wysiwygKaTeX,
+        props: { enableImageUpload: true },
     },
 ]
 

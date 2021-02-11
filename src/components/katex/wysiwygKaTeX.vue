@@ -55,12 +55,13 @@
       <!--        <button @click="setStyle('formatBlock', false, 'h4')"><i class="fas fa-heading"></i></button>-->
       <!--      </span>-->
       <span class="border-right">
-<!--        <button @click="alert('not implemented')"><i class="fas fa-image"></i></button>-->
+        <button v-if="enableImageUpload"
+                class="popup-button"
+                @click="insertImage"
+        ><i class="fas fa-image"></i></button>
         <button class="popup-button"
                 @click="createFormula"
-        >
-          <i class="fas fa-square-root-alt"></i>
-        </button>
+        ><i class="fas fa-square-root-alt"></i></button>
         <!--        <button @click="toggleRaw">RAW</button>-->
       </span>
       <span class="">
@@ -107,12 +108,17 @@
                    is-in-edit-mode
                    @insert-latex="modifyLaTeX"
     />
+
+    <image-modal ref="imageAddModal"
+                 @insert-images="insertImages"
+    />
   </div>
 </template>
 
 <script>
 import mathFormula from "@/components/katex/mathFormula";
 import formulaModal from "@/components/katex/formulaModal";
+import imageModal from "@/components/katex/imageModal";
 import Vue from 'vue';
 
 export default {
@@ -120,7 +126,8 @@ export default {
   components: {
     // eslint-disable-next-line vue/no-unused-components
     mathFormula,
-    formulaModal
+    formulaModal,
+    imageModal,
   },
   props: {
     id: String,
@@ -132,6 +139,10 @@ export default {
     rows: {
       type: Number,
       default: 5
+    },
+    enableImageUpload: {
+      type: Boolean,
+      default: false,
     },
   },
   data: function () {
@@ -306,6 +317,9 @@ export default {
       //   this.$refs.formulaPreview.style.opacity = 1;
       // }, 500);
     },
+    insertImage() {
+      this.$refs.imageAddModal.toggle();
+    },
 
     onDivInput(event) {
       this.$emit('input', event.target.innerHTML)
@@ -470,6 +484,16 @@ export default {
         this.selection.collapseToEnd();
         this.$refs.textarea.focus();
       }
+    },
+
+    insertImages(data) {
+      data.forEach(imagePath => {
+        let img = new Image()
+        img.src = imagePath;
+        let div = document.createElement('p');
+        div.appendChild(img)
+        this.range.insertNode(div);
+      })
     },
 
     rerenderFormulas() {
