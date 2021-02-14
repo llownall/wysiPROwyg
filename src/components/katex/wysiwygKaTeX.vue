@@ -493,6 +493,10 @@ export default {
         let div = document.createElement('p');
         div.appendChild(img)
         this.range.insertNode(div);
+        this.selection.removeAllRanges();
+        this.selection.addRange(this.range);
+        this.selection.collapseToEnd();
+        this.$refs.textarea.focus();
       })
     },
 
