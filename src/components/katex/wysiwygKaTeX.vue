@@ -9,7 +9,9 @@
           :class="{'hidden': !showPopup}"
           @mousedown="preventHide"
     >
-      <span class="border-right">
+      <span v-if="textStylesEnabled"
+            class="border-right"
+      >
         <button v-for="(fontStyle, index) in fontStyles"
                 :key="index"
                 class="popup-button"
@@ -19,7 +21,9 @@
           <i :class="fontStyle.icon"></i>
         </button>
       </span>
-      <span class="border-right">
+      <span v-if="fontSizeEnabled"
+            class="border-right"
+      >
 <!--        <button @click="decreaseFont">smaller</button>-->
         <!--        <button @click="increaseFont">bigger</button>-->
         <select class=""
@@ -31,7 +35,9 @@
           >{{ value }}</option>
         </select>
       </span>
-      <span class="border-right">
+      <span v-if="textAlignEnabled"
+            class="border-right"
+      >
         <button v-for="(textStyle, index) in textStyles"
                 :key="index"
                 class="popup-button"
@@ -41,7 +47,9 @@
           <i :class="textStyle.icon"></i>
         </button>
       </span>
-      <span class="border-right">
+      <span v-if="listsEnabled"
+            class="border-right"
+      >
         <button v-for="(listType, index) in lists"
                 :key="index"
                 class="popup-button"
@@ -54,17 +62,20 @@
       <!--      <span class="border-right">-->
       <!--        <button @click="setStyle('formatBlock', false, 'h4')"><i class="fas fa-heading"></i></button>-->
       <!--      </span>-->
-      <span class="border-right">
-        <button v-if="enableImageUpload"
+      <span v-if="imagesEnabled || formulasEnabled"
+            class="border-right"
+      >
+        <button v-if="imagesEnabled"
                 class="popup-button"
                 @click="insertImage"
         ><i class="fas fa-image"></i></button>
-        <button class="popup-button"
+        <button v-if="formulasEnabled"
+                class="popup-button"
                 @click="createFormula"
         ><i class="fas fa-square-root-alt"></i></button>
         <!--        <button @click="toggleRaw">RAW</button>-->
       </span>
-      <span class="">
+      <span v-if="redoEnabled">
         <button class="popup-button"
                 @click="setStyle('undo')"
         ><i class="fas fa-undo-alt"></i>
@@ -140,10 +151,10 @@ export default {
       type: Number,
       default: 5
     },
-    enableImageUpload: {
-      type: Boolean,
-      default: false,
-    },
+    functions: {
+      type: Array,
+      default: () => [],
+    }
   },
   data: function () {
     return {
@@ -214,6 +225,27 @@ export default {
       } catch (e) {
         return -1;
       }
+    },
+    textStylesEnabled() {
+      return this.functions.includes('textStyle')
+    },
+    fontSizeEnabled() {
+      return this.functions.includes('fontSize')
+    },
+    textAlignEnabled() {
+      return this.functions.includes('textAlign')
+    },
+    listsEnabled() {
+      return this.functions.includes('lists')
+    },
+    imagesEnabled() {
+      return this.functions.includes('imageInsert')
+    },
+    formulasEnabled() {
+      return this.functions.includes('formulaInsert')
+    },
+    redoEnabled() {
+      return this.functions.includes('redo')
     },
   },
   watch: {},

@@ -15,7 +15,8 @@ const routes = [
         path: '/katex',
         name: 'wysiwygKaTeX',
         component: wysiwygKaTeX,
-        props: { enableImageUpload: true },
+        props: { functions: ['textStyle', 'fontSize', 'textAlign', 'lists', 'imageInsert', 'formulaInsert', 'redo'] },
+        // props: { functions: ['textStyle', 'fontSize', 'textAlign', 'lists', 'imageInsert', 'formulaInsert', 'redo'] },
     },
 ]
 
